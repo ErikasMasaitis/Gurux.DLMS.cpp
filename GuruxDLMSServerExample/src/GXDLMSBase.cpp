@@ -71,6 +71,23 @@
 #include "../../development/include/GXDLMSActivityCalendar.h"
 #include "../../development/include/GXDLMSDemandRegister.h"
 #include "../../development/include/GXDLMSRegisterMonitor.h"
+#include "../../development/include/GXDLMSExtendedRegister.h"
+#include "../../development/include/GXDLMSSecuritySetup.h"
+#include "../../development/include/GXDLMSRegisterActivation.h"
+#include "../../development/include/GXDLMSUtilityTables.h"
+#include "../../development/include/GXDLMSGPRSSetup.h"
+#include "../../development/include/GXDLMSArbitrator.h"
+#include "../../development/include/GXDLMSLimiter.h"
+#include "../../development/include/GXDLMSCompactData.h"
+#include "../../development/include/GXDLMSDisconnectControl.h"
+#include "../../development/include/GXDLMSIp6Setup.h"
+#include "../../development/include/GXDLMSIp4Setup.h"
+#include "../../development/include/GXDLMSAutoAnswer.h"
+#include "../../development/include/GXDLMSAutoConnect.h"
+#include "../../development/include/GXDLMSTcpUdpSetup.h"
+#include "../../development/include/GXDLMSGSMDiagnostic.h"
+#include "../../development/include/GXDLMSSpecialDay.h"
+#include "../../development/include/GXDLMSSpecialDaysTable.h"
 #include "../../development/include/GXDLMSActionSchedule.h"
 #include "../../development/include/GXDLMSSapAssignment.h"
 #include "../../development/include/GXDLMSAutoAnswer.h"
@@ -346,7 +363,7 @@ CGXDLMSData* AddLogicalDeviceName(CGXDLMSObjectCollection& items, unsigned long 
 #if defined(_WIN32) || defined(_WIN64)//Windows
     sprintf_s(buff, "GRX%.13d", sn);
 #else
-    sprintf(buff, "GRX%.13d", sn);
+    sprintf(buff, "GRX%.13ld", sn);
 #endif
     CGXDLMSVariant id;
     id.Add((const char*)buff, 16);
@@ -377,7 +394,7 @@ void AddElectricityID1(CGXDLMSObjectCollection& items, unsigned long sn)
 #if defined(_WIN32) || defined(_WIN64)//Windows
     sprintf_s(buff, "GRX%.13d", sn);
 #else
-    sprintf(buff, "GRX%.13d", sn);
+    sprintf(buff, "GRX%.13ld", sn);
 #endif
     CGXDLMSVariant id;
     id.Add((const char*)buff, 16);
@@ -404,7 +421,7 @@ void AddElectricityID2(CGXDLMSObjectCollection& items, unsigned long sn)
 */
 void AddAutoConnect(CGXDLMSObjectCollection& items)
 {
-    CGXDLMSAutoConnect* pAC = new CGXDLMSAutoConnect();
+    CGXDLMSAutoConnect* pAC = new CGXDLMSAutoConnect("4.0.0.0.0.0");
     pAC->SetMode(DLMS_AUTO_CONNECT_MODE_NO_AUTO_CONNECT);
     pAC->SetRepetitions(10);
     pAC->SetRepetitionDelay(60);
@@ -419,9 +436,10 @@ void AddAutoConnect(CGXDLMSObjectCollection& items)
 */
 void AddActivityCalendar(CGXDLMSObjectCollection& items)
 {
-    CGXDLMSActivityCalendar* pActivity = new CGXDLMSActivityCalendar();
+    CGXDLMSActivityCalendar* pActivity = new CGXDLMSActivityCalendar("1.0.0.0.0.0");
     pActivity->SetCalendarNameActive("Active");
-    pActivity->GetSeasonProfileActive().push_back(new CGXDLMSSeasonProfile("Summer time", CGXDateTime(-1, 3, 31, 0, 0, 0, 0), ""));
+    auto b = CGXDateTime(-1, 3, 31, 0, 0, 0, 0);
+    pActivity->GetSeasonProfileActive().push_back(new CGXDLMSSeasonProfile("Summer time", b, ""));
     pActivity->GetWeekProfileTableActive().push_back(new CGXDLMSWeekProfile("Monday", 1, 1, 1, 1, 1, 1, 1));
     CGXDLMSDayProfile* aDp = new CGXDLMSDayProfile();
     aDp->SetDayId(1);
@@ -430,7 +448,8 @@ void AddActivityCalendar(CGXDLMSObjectCollection& items)
     aDp->GetDaySchedules().push_back(new CGXDLMSDayProfileAction(time, "test", 1));
     pActivity->GetDayProfileTableActive().push_back(aDp);
     pActivity->SetCalendarNamePassive("Passive");
-    pActivity->GetSeasonProfilePassive().push_back(new CGXDLMSSeasonProfile("Winter time", CGXDateTime(-1, 10, 30, 0, 0, 0, 0), ""));
+    auto a = CGXDateTime(-1, 10, 30, 0, 0, 0, 0);
+    pActivity->GetSeasonProfilePassive().push_back(new CGXDLMSSeasonProfile("Winter time", a, ""));
     pActivity->GetWeekProfileTablePassive().push_back(new CGXDLMSWeekProfile("Tuesday", 1, 1, 1, 1, 1, 1, 1));
 
     CGXDLMSDayProfile* passive = new CGXDLMSDayProfile();
@@ -468,11 +487,312 @@ void AddDemandRegister(CGXDLMSObjectCollection& items)
     pDr->SetCurrentAverageValue(10);
     pDr->SetLastAverageValue(20);
     pDr->SetStatus(1);
-    pDr->SetStartTimeCurrent(CGXDateTime::Now());
+    auto a = CGXDateTime::Now();
+    pDr->SetStartTimeCurrent(a);
     pDr->SetCaptureTime(CGXDateTime::Now());
     pDr->SetPeriod(10);
     pDr->SetNumberOfPeriods(1);
     items.push_back(pDr);
+}
+
+void AddExtendedRegister(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSExtendedRegister* er = new CGXDLMSExtendedRegister("1.0.31.99.0.255");
+    auto a = CGXDateTime::Now();
+    er->SetCaptureTime(a);
+    CGXDLMSVariant b = 2;
+    er->SetScaler(pow((float)10, 4));
+    er->SetUnit('a');
+    er->SetValue(b);
+    er->SetStatus(b);
+    items.push_back(er);
+}
+
+void AddSecuritySetup(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSSecuritySetup* ss = new CGXDLMSSecuritySetup("1.0.31.98.0.255");
+    ss->SetSecurityPolicy(DLMS_SECURITY_POLICY_AUTHENTICATED_REQUEST);
+    ss->SetSecuritySuite(DLMS_SECURITY_SUITE_V2);
+    CGXByteBuffer a;
+    a.AddString("4142434445464748");
+    ss->SetClientSystemTitle(a);
+    ss->GetServerSystemTitle().AddString("labas2");
+    items.push_back(ss);
+}
+
+void AddRegisterActivation(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSRegisterActivation* ra = new CGXDLMSRegisterActivation("1.0.31.97.0.255");
+    auto a = CGXDateTime::Now();
+    items.push_back(ra);
+}
+
+void AddUtilityTables(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSUtilityTables* ut = new CGXDLMSUtilityTables("1.0.31.96.0.255");
+    CGXByteBuffer buf;
+    buf.AddString("labas");
+    ut->SetBuffer(buf);
+    ut->SetTableId(4);
+    items.push_back(ut);
+}
+
+void AddGprsSetup(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSGPRSSetup* ut = new CGXDLMSGPRSSetup("1.0.31.95.0.255");
+    std::string str = "labasrytas";
+    ut->SetAPN(str);
+    ut->SetPINCode(987215454);
+    ut->GetDefaultQualityOfService().SetDelay(4);
+    ut->GetDefaultQualityOfService().SetMeanThroughput(5);
+    ut->GetDefaultQualityOfService().SetPeakThroughput(7);
+    ut->GetDefaultQualityOfService().SetPrecedence(10);
+    ut->GetDefaultQualityOfService().SetReliability(15);
+    items.push_back(ut);
+}
+
+void AddArbitrator(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSArbitrator* a = new CGXDLMSArbitrator("1.0.31.94.0.255");
+    a->SetLastOutcome('n');
+    items.push_back(a);
+}
+
+void AddLimiter(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSLimiter *l = new CGXDLMSLimiter("1.0.31.93.0.255");
+    CGXDLMSVariant b = 9;
+    CGXDLMSVariant c;
+    c.Add("1.0.31.93.0.255");
+
+    CGXDLMSPushSetup* pPush = new CGXDLMSPushSetup("5.0.0.0.0.0");
+    pPush->GetCommunicationWindow().push_back(std::pair<CGXDateTime, CGXDateTime>(CGXDateTime(-1, -1, -1, 6, -1, -1, -1), CGXDateTime(-1, -1, -1, 8, -1, -1, -1)));
+
+    l->SetMonitoredValue(pPush);
+    l->SetThresholdActive(b);
+    l->SetThresholdNormal(b);
+    l->SetThresholdEmergency(b);
+    l->SetMinOverThresholdDuration(987897);
+    l->SetMinUnderThresholdDuration(777);
+    l->SetEmergencyProfileActive(true);
+    CGXDLMSActionItem a;
+    std::string str = "1.0.31.92.0.255";
+    a.SetLogicalName(str);
+    l->SetActionOverThreshold(a);
+    CGXDLMSActionItem ac;
+    std::string str2 = "1.0.31.94.0.255";
+    ac.SetLogicalName(str2);
+    l->SetActionUnderThreshold(ac);
+
+    CGXDLMSEmergencyProfile em;
+    em.SetID(4);
+    em.SetActivationTime(CGXDateTime(-1, -1, -1, 6, -1, -1, -1));
+    em.SetDuration(8);
+    l->SetEmergencyProfile(em);
+    l->SetEmergencyProfileGroupIDs({4, 5, 6, 7});
+
+    items.push_back(l);
+}
+
+void AddCompactData(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSCompactData *cd = new CGXDLMSCompactData("1.0.31.92.0.255");
+    CGXByteBuffer a;
+    a.AddString("labasvakaaras");
+    CGXDLMSCaptureObject* capture = new CGXDLMSCaptureObject(2, 0);
+    CGXDLMSClock* pClock = new CGXDLMSClock();
+    CGXDateTime begin(-1, 9, 1, -1, -1, -1, -1);
+    pClock->SetBegin(begin);
+    CGXDateTime end(-1, 3, 1, -1, -1, -1, -1);
+    pClock->SetEnd(end);
+    pClock->SetTimeZone(CGXDateTime::GetCurrentTimeZone());
+    pClock->SetDeviation(CGXDateTime::GetCurrentDeviation());
+    cd->GetCaptureObjects().push_back(std::pair<CGXDLMSObject*, CGXDLMSCaptureObject*>(pClock, capture));
+    cd->SetBuffer(a);
+    cd->SetTemplateDescription(a);
+    cd->SetCaptureMethod(DLMS_CAPTURE_METHOD_IMPLICIT);
+    items.push_back(cd);
+}
+
+void AddDisconnectControl(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSDisconnectControl *dc = new CGXDLMSDisconnectControl("1.0.31.91.0.255");
+    dc->SetOutputState(true);
+    dc->SetControlState(DLMS_CONTROL_STATE_READY_FOR_RECONNECTION);
+    dc->SetControlMode(DLMS_CONTROL_MODE_MODE_6);
+    items.push_back(dc);
+}
+
+void AddIp6setup(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSIp6Setup *ip = new CGXDLMSIp6Setup("1.0.31.90.0.255");
+    std::string str = "1.0.3.90.0.255";
+    ip->SetDataLinkLayerReference(str);
+    ip->SetAddressConfigMode(DLMS_IP6_ADDRESS_CONFIG_MODE_MANUAL);
+    std::vector<IN6_ADDR> value;
+    // Add three IN6_ADDR values to the vector
+    IN6_ADDR addr1 = { { .__u6_addr32 = {0x03, 0xf0, 0xff, 0x44}}}, addr2 = { { .__u6_addr32 = {0x03, 0xf0, 0xff, 0x44}}};
+    value.push_back(addr1);
+    value.push_back(addr2);
+    ip->SetUnicastIPAddress(value);
+    ip->setMulticastIPAddress(value);
+    ip->SetGatewayIPAddress(value);
+    ip->SetPrimaryDNSAddress(addr1);
+    ip->m_SetTrafficClass('n');
+    CGXNeighborDiscoverySetup neighbor;
+    neighbor.SetMaxRetry(4);
+    neighbor.SetRetryWaitTime(5);
+    neighbor.SetSendPeriod(78888);
+    ip->GetNeighborDiscoverySetup().push_back(&neighbor);
+    items.push_back(ip);
+}
+
+void AddIp4setup(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSIp4Setup *ip = new CGXDLMSIp4Setup("0.0.25.1.0.255");
+    std::string str = "7.0.0.0.0.0";
+    ip->SetDataLinkLayerReference(str);
+    std::string str2 = "192.168.1.1";
+    ip->SetIPAddress(str2);
+    std::string str3 = "255.255.0.0";
+    ip->SetSubnetMask(str3);
+    std::vector<CGXDLMSIp4SetupIpOption> opts;
+    CGXDLMSIp4SetupIpOption a;
+    CGXByteBuffer b;
+    b.AddString("labasvakaaras");
+    IN6_ADDR addr1 = { { .__u6_addr32 = {0x03, 0xf0, 0xff, 0x44}}}, addr2 = { { .__u6_addr32 = {0x03, 0xf0, 0xff, 0x44}}};
+    a.SetData(b);
+    a.SetType(IP_OPTION_TYPE_RECORD_ROUTE);
+    ip->GetMulticastIPAddress().push_back(44);
+    ip->GetMulticastIPAddress().push_back(45);
+    ip->GetMulticastIPAddress().push_back(47);
+    opts.push_back(a);
+    opts.push_back(a);
+    ip->SetIPOptions(opts);
+    std::string str4 = "275.255.0.0";
+    ip->SetGatewayIPAddress(str4);
+    ip->SetUseDHCP(true);
+    std::string str5 = "8.8.8.8";
+    ip->SetPrimaryDNSAddress(str5);
+    ip->SetSecondaryDNSAddress(str5);
+    items.push_back(ip);
+}
+
+void AddTcpudp(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSTcpUdpSetup *tu = new CGXDLMSTcpUdpSetup("1.0.31.88.0.255");
+    tu->SetPort(655);
+    std::string str = "1.0.31.89.0.255";
+    tu->SetIPReference(str);
+    tu->SetMaximumSegmentSize(576);
+    tu->SetMaximumSimultaneousConnections(5);
+    tu->SetInactivityTimeout(180);
+    items.push_back(tu);
+}
+
+void AddAutoConn(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSAutoConnect *ac = new CGXDLMSAutoConnect("1.0.31.87.0.255");
+    ac->SetMode(DLMS_AUTO_CONNECT_MODE_MANUFACTURE_SPESIFIC);
+    ac->SetRepetitions(4);
+    ac->SetRepetitions(7);
+    ac->SetRepetitionDelay(60);
+    CGXDateTime date1;
+    CGXDateTime date2;
+    struct tm ada = {0,0,0,1,0,122,0,0,0};
+    date1.SetValue(ada);
+    struct tm ada1 = {0,0,0,1,5,180,5,4,0};
+    date2.SetValue(ada1);
+    std::vector<std::pair< CGXDateTime, CGXDateTime>> asd;
+    asd.emplace_back(date1,date2);
+    asd.emplace_back(date2,date1);
+    ac->SetCallingWindow(asd);
+    // std::vector<std::string> str;
+    // std::string a = "192.168.1.1";
+    // str.push_back(a);
+    // std::string b = "192.168.1.2";
+    // str.push_back(b);
+    // ac->SetDestinations(str);
+    ac->GetDestinations().push_back("www.gurux.org");
+    ac->GetDestinations().push_back("1.0.31.86.0.255");
+    items.push_back(ac);
+}
+
+void AddAutoAns(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSAutoAnswer *aa = new CGXDLMSAutoAnswer("1.0.31.86.0.255");
+    aa->SetMode(DLMS_AUTO_ANSWER_MODE_CONNECTED);
+    CGXDateTime date1;
+    CGXDateTime date2;
+    struct tm ada = {0,0,0,1,0,122,0,0,0};
+    date1.SetValue(ada);
+    struct tm ada1 = {0,0,0,1,5,180,5,4,0};
+    date2.SetValue(ada1);
+    std::vector<std::pair< CGXDateTime, CGXDateTime>> asd;
+    asd.emplace_back(date1,date2);
+    asd.emplace_back(date2,date1);
+    aa->SetListeningWindow(asd);
+    aa->SetStatus(AUTO_ANSWER_STATUS_ACTIVE);
+    aa->SetNumberOfCalls(4);
+    aa->SetNumberOfRingsInListeningWindow(6);
+    aa->SetNumberOfRingsOutListeningWindow(8);
+    items.push_back(aa);
+}
+
+void AddScriptTable(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSScriptTable *st = new CGXDLMSScriptTable("1.0.31.85.0.255");
+    std::vector<CGXDLMSScript*> asd;
+    CGXDLMSScript *a = new CGXDLMSScript();
+    a->SetID(4);
+    asd.push_back(a);
+    CGXDLMSScript *b = new CGXDLMSScript();
+    b->SetID(7);
+    asd.push_back(b);
+    st->GetScripts().insert(st->GetScripts().end(), asd.begin(), asd.end());
+    items.push_back(st);
+}
+
+void AddGsmDiagnostics(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSGSMDiagnostic *gd = new CGXDLMSGSMDiagnostic("0.0.25.6.0.255");
+    gd->GetOperator().append("labas");
+    gd->SetStatus(DLMS_GSM_STATUS_ROAMING);
+    gd->SetCircuitSwitchStatus(DLMS_GSM_CIRCUIT_SWITCH_STATUS_ACTIVE);
+    gd->SetPacketSwitchStatus(DLMS_GSM_PACKET_SWITCH_STATUS_CDMA);
+    gd->GetCellInfo().SetCellId(4);
+    gd->GetCellInfo().SetSignalQuality(77);
+    gd->GetCellInfo().SetBer(8);
+    std::vector<GXAdjacentCell*> asd;
+    GXAdjacentCell *a = new GXAdjacentCell();
+    a->SetCellId(1);
+    a->SetSignalQuality(55);
+    GXAdjacentCell *b = new GXAdjacentCell();
+    b->SetCellId(2);
+    b->SetSignalQuality(1);
+    asd.push_back(a);
+    asd.push_back(b);
+    gd->GetAdjacentCells().insert(gd->GetAdjacentCells().end(), asd.begin(), asd.end());
+    gd->GetCaptureTime().AddDays(100000);
+    items.push_back(gd);
+}
+
+void AddSpecialdaytable(CGXDLMSObjectCollection& items)
+{
+    CGXDLMSSpecialDaysTable *sd = new CGXDLMSSpecialDaysTable("1.0.31.84.0.255");
+    CGXDLMSSpecialDay specialDay;
+    specialDay.SetDayId(4);
+    specialDay.SetIndex(20);
+    CGXDateTime date(-1, -1, -1, 6, -1, -1, -1);
+    specialDay.SetDate(date);
+    CGXDLMSSpecialDay specialDay2;
+    specialDay2.SetDayId(4);
+    specialDay2.SetIndex(20);
+    CGXDateTime datee(-1, -1, -1, 5, -1, -1, -1);
+    specialDay2.SetDate(datee);
+    sd->GetEntries().push_back(&specialDay);
+    sd->GetEntries().push_back(&specialDay2);
+    items.push_back(sd);
 }
 
 /*
@@ -535,7 +855,7 @@ void AddSapAssignment(CGXDLMSObjectCollection& items)
 */
 void AddAutoAnswer(CGXDLMSObjectCollection& items)
 {
-    CGXDLMSAutoAnswer* pAa = new CGXDLMSAutoAnswer();
+    CGXDLMSAutoAnswer* pAa = new CGXDLMSAutoAnswer("3.0.0.0.0.0");
     pAa->SetMode(DLMS_AUTO_ANSWER_MODE_NONE);
     pAa->GetListeningWindow().push_back(std::pair<CGXDateTime, CGXDateTime>(CGXDateTime(-1, -1, -1, 6, -1, -1, -1), CGXDateTime(-1, -1, -1, 8, -1, -1, -1)));
     pAa->SetStatus(AUTO_ANSWER_STATUS_INACTIVE);
@@ -550,7 +870,7 @@ void AddAutoAnswer(CGXDLMSObjectCollection& items)
 */
 void AddModemConfiguration(CGXDLMSObjectCollection& items)
 {
-    CGXDLMSModemConfiguration* pMc = new CGXDLMSModemConfiguration();
+    CGXDLMSModemConfiguration* pMc = new CGXDLMSModemConfiguration("2.0.0.0.0.0");
     pMc->SetCommunicationSpeed(DLMS_BAUD_RATE_38400);
     CGXDLMSModemInitialisation init;
     vector<CGXDLMSModemInitialisation> initialisationStrings;
@@ -567,8 +887,8 @@ void AddModemConfiguration(CGXDLMSObjectCollection& items)
 */
 void AddMacAddressSetup(CGXDLMSObjectCollection& items)
 {
-    CGXDLMSMacAddressSetup* pMac = new CGXDLMSMacAddressSetup();
-    pMac->SetMacAddress("00:11:22:33:44:55:66");
+    CGXDLMSMacAddressSetup* pMac = new CGXDLMSMacAddressSetup("7.0.0.0.0.0");
+    pMac->SetMacAddress("00:11:22:33:44:55:67");
     items.push_back(pMac);
 }
 
@@ -577,7 +897,7 @@ void AddMacAddressSetup(CGXDLMSObjectCollection& items)
 */
 CGXDLMSIp4Setup* AddIp4Setup(CGXDLMSObjectCollection& items, std::string& address)
 {
-    CGXDLMSIp4Setup* pIp4 = new CGXDLMSIp4Setup();
+    CGXDLMSIp4Setup* pIp4 = new CGXDLMSIp4Setup("6.0.0.0.0.0");
     pIp4->SetIPAddress(address);
     items.push_back(pIp4);
     return pIp4;
@@ -610,6 +930,8 @@ int CGXDLMSBase::Init(int port, GX_TRACE_LEVEL trace)
 
     //Add Last avarage.
     CGXDLMSRegister* pRegister = new CGXDLMSRegister("1.1.21.25.0.255");
+    CGXDLMSVariant asdad = 2;
+    pRegister->SetValue(asdad);
     //Set access right. Client can't change Device name.
     pRegister->SetAccess(2, DLMS_ACCESS_MODE_READ);
     GetItems().push_back(pRegister);
@@ -678,6 +1000,24 @@ int CGXDLMSBase::Init(int port, GX_TRACE_LEVEL trace)
     //Add Demand Register object.
     AddDemandRegister(GetItems());
 
+
+    AddExtendedRegister(GetItems());
+    AddSecuritySetup(GetItems());
+    AddUtilityTables(GetItems());
+    AddGprsSetup(GetItems());
+    AddArbitrator(GetItems());
+    AddLimiter(GetItems());
+    AddSpecialdaytable(GetItems());
+    AddCompactData(GetItems());
+    AddDisconnectControl(GetItems());
+    AddIp6setup(GetItems());
+    AddIp4setup(GetItems());
+    AddTcpudp(GetItems());
+    AddAutoConn(GetItems());
+    AddAutoAns(GetItems());
+    AddScriptTable(GetItems());
+    AddGsmDiagnostics(GetItems());
+
     ///////////////////////////////////////////////////////////////////////
     //Add Register Monitor object.
     AddRegisterMonitor(GetItems(), pRegister);
@@ -707,9 +1047,13 @@ int CGXDLMSBase::Init(int port, GX_TRACE_LEVEL trace)
 
     ///////////////////////////////////////////////////////////////////////
     //Add Push Setup object.
-    CGXDLMSPushSetup* pPush = new CGXDLMSPushSetup();
+    CGXDLMSPushSetup* pPush = new CGXDLMSPushSetup("5.0.0.0.0.0");
     address += ":7000";
     pPush->SetDestination(address);
+    pPush->GetCommunicationWindow().push_back(std::pair<CGXDateTime, CGXDateTime>(CGXDateTime(-1, -1, -1, 6, -1, -1, -1), CGXDateTime(-1, -1, -1, 8, -1, -1, -1)));
+    pPush->SetRandomisationStartInterval(40);
+    pPush->SetNumberOfRetries(30);
+    pPush->SetRepetitionDelay(20);
     GetItems().push_back(pPush);
 
     // Add push object itself. This is needed to tell structure of data to
@@ -723,11 +1067,7 @@ int CGXDLMSBase::Init(int port, GX_TRACE_LEVEL trace)
     ///////////////////////////////////////////////////////////////////////
     //Add image transfer object.
     CGXDLMSImageTransfer* image = new CGXDLMSImageTransfer();
-    GetItems().push_back(image);
-    ///////////////////////////////////////////////////////////////////////
-    //Add script table object.
-    CGXDLMSScriptTable* st = new CGXDLMSScriptTable();
-    GetItems().push_back(st);
+    GetItems().push_back(image);;
 
     ///////////////////////////////////////////////////////////////////////
     //Add Schedule object.
